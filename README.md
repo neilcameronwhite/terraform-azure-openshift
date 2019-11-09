@@ -61,7 +61,7 @@ If something failed during the installation you can run ```bootstrap.sh``` again
 
 ### Notes
 
-Terraform verions used for this plan
+Terraform version used for this plan
 ```
 Terraform v0.12.13
 + provider.azurerm v1.36.1
