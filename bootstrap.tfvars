@@ -1,6 +1,7 @@
 azure_location = "West Europe"
-azure_resource_group_name = "okd-cluster-08"
+azure_resource_group_name = "okd-cluster-09"
 azure_resources_prefix = "okd"
+azure_storage_prefix = "okd000"
 openshift_node_count = "3"
 openshift_master_count = "3"
 openshift_infra_count = "3"

@@ -1,6 +1,7 @@
 variable "azure_location" {}
 variable "azure_resource_group_name" {}
 variable "azure_resources_prefix" {}
+variable "var.azure_storage_prefix" {}
 variable "openshift_node_count" {}
 variable "openshift_master_count" {}
 variable "openshift_infra_count" {}
