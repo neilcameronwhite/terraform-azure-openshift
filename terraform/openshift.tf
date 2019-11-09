@@ -7,7 +7,7 @@ resource "azurerm_resource_group" "openshift" {
 }
 
 resource "azurerm_storage_account" "openshift" {
-  name                      = "openshift${lower(replace(substr(uuid(), 0, 10), "-", ""))}"
+  name                      = "${var.azure_resources_prefix}-${lower(replace(substr(uuid(), 0, 10), "-", ""))}"
   resource_group_name       = "${azurerm_resource_group.openshift.name}"
   location                  = "${var.azure_location}"
   account_tier              = "Standard"

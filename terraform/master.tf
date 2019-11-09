@@ -5,31 +5,31 @@ resource "random_string" "master" {
 }
 
 resource "azurerm_public_ip" "master" {
-  name                         = "openshift-master-public-ip"
+  name                         = "${var.azure_resources_prefix}-master-public-ip"
   location                     = "${var.azure_location}"
   resource_group_name          = "${azurerm_resource_group.openshift.name}"
-  public_ip_address_allocation = "static"
+  allocation_method = "Static"
   domain_name_label            = "ocp-${random_string.master.result}"
   sku                          = "Standard"
 }
 
 resource "azurerm_availability_set" "master" {
-  name                = "openshift-master-availability-set"
+  name                = "${var.azure_resources_prefix}-master-availability-set"
   location            = "${var.azure_location}"
   resource_group_name = "${azurerm_resource_group.openshift.name}"
   managed             = true
 }
 
-resource "azurerm_dns_a_record" "openshift-master-private-load-balancer" {
-  name                = "master-private-lb"
-  zone_name           = "${azurerm_dns_zone.openshift.name}"
-  resource_group_name = "${azurerm_resource_group.openshift.name}"
-  ttl                 = 300
-  records             = ["10.0.1.250"]
-}
+#resource "azurerm_dns_a_record" "${var.azure_resources_prefix}-master-private-load-balancer" {
+#  name                = "master-private-lb"
+#  zone_name           = "${azurerm_dns_zone.openshift.name}"
+#  resource_group_name = "${azurerm_resource_group.openshift.name}"
+#  ttl                 = 300
+#  records             = ["10.0.1.250"]
+#}
 
 resource "azurerm_lb" "master" {
-  name                = "openshift-master-load-balancer"
+  name                = "${var.azure_resources_prefix}-master-load-balancer"
   location            = "${var.azure_location}"
   resource_group_name = "${azurerm_resource_group.openshift.name}"
   sku                 = "Standard"
@@ -42,7 +42,7 @@ resource "azurerm_lb" "master" {
 }
 
 resource "azurerm_lb_backend_address_pool" "master" {
-  name                = "openshift-master-address-pool"
+  name                = "${var.azure_resources_prefix}-master-address-pool"
   resource_group_name = "${azurerm_resource_group.openshift.name}"
   loadbalancer_id     = "${azurerm_lb.master.id}"
 }
@@ -70,7 +70,7 @@ resource "azurerm_lb_probe" "master" {
 }
 
 resource "azurerm_network_security_group" "master" {
-  name                = "openshift-master-security-group"
+  name                = "${var.azure_resources_prefix}-master-security-group"
   location            = "${var.azure_location}"
   resource_group_name = "${azurerm_resource_group.openshift.name}"
 }
@@ -91,7 +91,7 @@ resource "azurerm_network_security_rule" "master-8443" {
 
 resource "azurerm_network_interface" "master" {
   count                     = "${var.openshift_master_count}"
-  name                      = "openshift-master-nic-${count.index + 1}"
+  name                      = "${var.azure_resources_prefix}-master-nic-${count.index + 1}"
   location                  = "${var.azure_location}"
   resource_group_name       = "${azurerm_resource_group.openshift.name}"
   network_security_group_id = "${azurerm_network_security_group.master.id}"
@@ -106,7 +106,7 @@ resource "azurerm_network_interface" "master" {
 
 resource "azurerm_virtual_machine" "master" {
   count                 = "${var.openshift_master_count}"
-  name                  = "openshift-master-vm-${count.index + 1}"
+  name                  = "${var.azure_resources_prefix}-master-vm-${count.index + 1}"
   location              = "${var.azure_location}"
   resource_group_name   = "${azurerm_resource_group.openshift.name}"
   network_interface_ids = ["${element(azurerm_network_interface.master.*.id, count.index)}"]
@@ -121,14 +121,14 @@ resource "azurerm_virtual_machine" "master" {
   }
 
   storage_os_disk {
-    name              = "openshift-master-vm-os-disk-${count.index + 1}"
+    name              = "${var.azure_resources_prefix}-master-vm-os-disk-${count.index + 1}"
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
   }
 
   storage_data_disk {
-    name              = "openshift-master-vm-data-disk-${count.index + 1}"
+    name              = "${var.azure_resources_prefix}-master-vm-data-disk-${count.index + 1}"
     create_option     = "Empty"
     managed_disk_type = "Standard_LRS"
     lun               = 0

@@ -1,6 +1,6 @@
 resource "azurerm_network_interface" "node" {
   count               = "${var.openshift_node_count}"
-  name                = "openshift-node-nic-${count.index + 1}"
+  name                = "${var.azure_resources_prefix}-node-nic-${count.index + 1}"
   location            = "${var.azure_location}"
   resource_group_name = "${azurerm_resource_group.openshift.name}"
 
@@ -21,7 +21,7 @@ resource "azurerm_storage_container" "node" {
 
 resource "azurerm_virtual_machine" "node" {
   count                 = "${var.openshift_node_count}"
-  name                  = "openshift-node-vm-${count.index + 1}"
+  name                  = "${var.azure_resources_prefix}-node-vm-${count.index + 1}"
   location              = "${var.azure_location}"
   resource_group_name   = "${azurerm_resource_group.openshift.name}"
   network_interface_ids = ["${element(azurerm_network_interface.node.*.id, count.index)}"]
@@ -35,14 +35,14 @@ resource "azurerm_virtual_machine" "node" {
   }
 
   storage_os_disk {
-    name              = "openshift-node-vm-os-disk-${count.index + 1}"
+    name              = "${var.azure_resources_prefix}-node-vm-os-disk-${count.index + 1}"
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
   }
 
   storage_data_disk {
-    name              = "openshift-node-vm-data-disk-${count.index + 1}"
+    name              = "${var.azure_resources_prefix}-node-vm-data-disk-${count.index + 1}"
     create_option     = "Empty"
     managed_disk_type = "Standard_LRS"
     lun               = 0
