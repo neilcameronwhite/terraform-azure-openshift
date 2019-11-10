@@ -13,7 +13,7 @@ resource "azurerm_availability_set" "infra" {
 }
 
 resource "azurerm_lb" "infra" {
-  name                = "${var.azure_resources_prefix}-infra-load-balancer"
+  name                = "${var.azure_resources_prefix}-infra"
   location            = "${var.azure_location}"
   resource_group_name = "${azurerm_resource_group.openshift.name}"
 
