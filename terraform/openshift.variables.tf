@@ -1,7 +1,12 @@
 variable "azure_location" {}
 variable "azure_resource_group_name" {}
 variable "azure_resources_prefix" {}
-variable "var.azure_storage_prefix" {}
+variable "azure_storage_prefix" {}
+variable "azure_address_space" {}
+variable "azure_address_prefix_master" {}
+variable "azure_address_prefix_infra" {}
+variable "azure_address_prefix_node" {}
+variable "openshift_master_internal_load_balancer" {}
 variable "openshift_node_count" {}
 variable "openshift_master_count" {}
 variable "openshift_infra_count" {}

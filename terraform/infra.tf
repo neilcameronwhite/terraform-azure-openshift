@@ -125,11 +125,11 @@ resource "azurerm_virtual_machine" "infra" {
   }
 
   storage_data_disk {
-    name              = "${var.azure_resources_prefix}-infra-vm-data-disk-${count.index + 1}"
+    name              = "${var.azure_resources_prefix}-infra-vm-docker-disk-${count.index + 1}"
     create_option     = "Empty"
     managed_disk_type = "Standard_LRS"
     lun               = 0
-    disk_size_gb      = 20
+    disk_size_gb      = 50
   }
 
   delete_os_disk_on_termination    = true

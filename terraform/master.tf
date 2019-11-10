@@ -1,20 +1,20 @@
 resource "random_string" "master" {
-  length = 16
+  length  = 16
   special = false
-  upper = false
+  upper   = false
 }
 
 resource "azurerm_public_ip" "master" {
-  name                         = "${var.azure_resources_prefix}-master-public-ip"
-  location                     = "${var.azure_location}"
-  resource_group_name          = "${azurerm_resource_group.openshift.name}"
-  allocation_method = "Static"
-  domain_name_label            = "ocp-${random_string.master.result}"
-  sku                          = "Standard"
+  name                = "${var.azure_resources_prefix}-master-public-ip"
+  location            = "${var.azure_location}"
+  resource_group_name = "${azurerm_resource_group.openshift.name}"
+  allocation_method   = "Static"
+  domain_name_label   = "okd-${random_string.master.result}"
+  sku                 = "Standard"
 }
 
 resource "azurerm_availability_set" "master" {
-  name                = "${var.azure_resources_prefix}-master-availability-set"
+  name                = "${var.azure_resources_prefix}-masters"
   location            = "${var.azure_location}"
   resource_group_name = "${azurerm_resource_group.openshift.name}"
   managed             = true
@@ -28,12 +28,11 @@ resource "azurerm_availability_set" "master" {
 #  records             = ["10.0.1.250"]
 #}
 
-resource "azurerm_lb" "master" {
-  name                = "${var.azure_resources_prefix}-master-load-balancer"
-  location            = "${var.azure_location}"
-  resource_group_name = "${azurerm_resource_group.openshift.name}"
-  sku                 = "Standard"
-
+resource "azurerm_lb" "master-public-load-balancer" {
+  name                            = "${var.azure_resources_prefix}-master-public"
+  location                        = "${var.azure_location}"
+  resource_group_name             = "${azurerm_resource_group.openshift.name}"
+  sku                             = "Standard"
   frontend_ip_configuration {
     name                          = "default"
     public_ip_address_id          = "${azurerm_public_ip.master.id}"
@@ -41,32 +40,74 @@ resource "azurerm_lb" "master" {
   }
 }
 
-resource "azurerm_lb_backend_address_pool" "master" {
+resource "azurerm_lb_backend_address_pool" "master-public-load-balancer" {
   name                = "${var.azure_resources_prefix}-master-address-pool"
   resource_group_name = "${azurerm_resource_group.openshift.name}"
-  loadbalancer_id     = "${azurerm_lb.master.id}"
+  loadbalancer_id     = "${azurerm_lb.master-public-load-balancer.id}"
 }
 
-resource "azurerm_lb_rule" "master-8443-8443" {
-  name                    = "master-lb-rule-8443-8443"
-  resource_group_name     = "${azurerm_resource_group.openshift.name}"
-  loadbalancer_id         = "${azurerm_lb.master.id}"
-  backend_address_pool_id = "${azurerm_lb_backend_address_pool.master.id}"
-  probe_id                = "${azurerm_lb_probe.master.id}"
+resource "azurerm_lb_rule" "master-public-load-balancer-rule" {
+  name                           = "control-plane-api"
+  resource_group_name            = "${azurerm_resource_group.openshift.name}"
+  loadbalancer_id                = "${azurerm_lb.master-public-load-balancer.id}"
+  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.master-public-load-balancer.id}"
+  probe_id                       = "${azurerm_lb_probe.master-public-load-balancer.id}"
   protocol                       = "tcp"
-  frontend_port                  = 8443
-  backend_port                   = 8443
+  frontend_port                  = 443
+  backend_port                   = 443
   idle_timeout_in_minutes        = 10
   frontend_ip_configuration_name = "default"
 }
 
-resource "azurerm_lb_probe" "master" {
-  name                = "master-lb-probe-8443-up"
+resource "azurerm_lb_probe" "master-public-load-balancer" {
+  name                = "control-plane-api"
   resource_group_name = "${azurerm_resource_group.openshift.name}"
-  loadbalancer_id     = "${azurerm_lb.master.id}"
+  loadbalancer_id     = "${azurerm_lb.master-public-load-balancer.id}"
   protocol            = "Https"
   request_path        = "/healthz"
-  port                = 8443
+  port                = 443
+}
+
+
+resource "azurerm_lb" "master-internal-load-balancer" {
+  name                            = "${var.azure_resources_prefix}-master-internal"
+  location                        = "${var.azure_location}"
+  resource_group_name             = "${azurerm_resource_group.openshift.name}"
+  sku                             = "Standard"
+  frontend_ip_configuration {
+    name                          = "control-plane-api"
+    subnet_id                     = "${azurerm_subnet.master.id}"
+    private_ip_address            = "${var.openshift_master_internal_load_balancer}"
+    private_ip_address_allocation = "Static"
+  }
+}
+
+resource "azurerm_lb_backend_address_pool" "master-internal-load-balancer" {
+  name                = "${var.azure_resources_prefix}-master-address-pool"
+  resource_group_name = "${azurerm_resource_group.openshift.name}"
+  loadbalancer_id     = "${azurerm_lb.master-internal-load-balancer.id}"
+}
+
+resource "azurerm_lb_probe" "master-internal-load-balancer" {
+  name                = "control-plane-api"
+  resource_group_name = "${azurerm_resource_group.openshift.name}"
+  loadbalancer_id     = "${azurerm_lb.master-internal-load-balancer.id}"
+  protocol            = "Https"
+  request_path        = "/healthz"
+  port                = 443
+}
+
+resource "azurerm_lb_rule" "master-internal-load-balancer" {
+  name                           = "control-plane-api"
+  resource_group_name            = "${azurerm_resource_group.openshift.name}"
+  loadbalancer_id                = "${azurerm_lb.master-internal-load-balancer.id}"
+  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.master-internal-load-balancer.id}"
+  probe_id                       = "${azurerm_lb_probe.master-internal-load-balancer.id}"
+  protocol                       = "tcp"
+  frontend_port                  = 443
+  backend_port                   = 443
+  idle_timeout_in_minutes        = 10
+  frontend_ip_configuration_name = "control-plane-api"
 }
 
 resource "azurerm_network_security_group" "master" {
@@ -75,14 +116,14 @@ resource "azurerm_network_security_group" "master" {
   resource_group_name = "${azurerm_resource_group.openshift.name}"
 }
 
-resource "azurerm_network_security_rule" "master-8443" {
-  name                        = "master-8443"
+resource "azurerm_network_security_rule" "master-443" {
+  name                        = "HTTPS"
   priority                    = 100
   direction                   = "Inbound"
   access                      = "Allow"
   protocol                    = "Tcp"
   source_port_range           = "*"
-  destination_port_range      = 8443
+  destination_port_range      = 443
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = "${azurerm_resource_group.openshift.name}"
@@ -100,13 +141,14 @@ resource "azurerm_network_interface" "master" {
     name                                    = "default"
     subnet_id                               = "${azurerm_subnet.master.id}"
     private_ip_address_allocation           = "dynamic"
-    load_balancer_backend_address_pools_ids = ["${azurerm_lb_backend_address_pool.master.id}"]
+    load_balancer_backend_address_pools_ids = ["${azurerm_lb_backend_address_pool.master-public-load-balancer.id}"]
   }
 }
 
+
 resource "azurerm_virtual_machine" "master" {
   count                 = "${var.openshift_master_count}"
-  name                  = "${var.azure_resources_prefix}-master-vm-${count.index + 1}"
+  name                  = "${var.azure_resources_prefix}-master-${count.index + 1}"
   location              = "${var.azure_location}"
   resource_group_name   = "${azurerm_resource_group.openshift.name}"
   network_interface_ids = ["${element(azurerm_network_interface.master.*.id, count.index)}"]
@@ -114,25 +156,33 @@ resource "azurerm_virtual_machine" "master" {
   availability_set_id   = "${azurerm_availability_set.master.id}"
 
   storage_image_reference {
-    publisher = "${var.openshift_os_image_publisher}"
-    offer     = "${var.openshift_os_image_offer}"
-    sku       = "${var.openshift_os_image_sku}"
-    version   = "${var.openshift_os_image_version}"
+    publisher           = "${var.openshift_os_image_publisher}"
+    offer               = "${var.openshift_os_image_offer}"
+    sku                 = "${var.openshift_os_image_sku}"
+    version             = "${var.openshift_os_image_version}"
   }
 
   storage_os_disk {
-    name              = "${var.azure_resources_prefix}-master-vm-os-disk-${count.index + 1}"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
+    name                = "${var.azure_resources_prefix}-master-vm-os-disk-${count.index + 1}"
+    caching             = "ReadWrite"
+    create_option       = "FromImage"
+    managed_disk_type   = "Standard_LRS"
   }
 
   storage_data_disk {
-    name              = "${var.azure_resources_prefix}-master-vm-data-disk-${count.index + 1}"
-    create_option     = "Empty"
-    managed_disk_type = "Standard_LRS"
-    lun               = 0
-    disk_size_gb      = 20
+    name                = "${var.azure_resources_prefix}-master-vm-docker-disk-${count.index + 1}"
+    create_option       = "Empty"
+    managed_disk_type   = "Standard_LRS"
+    lun                 = 0
+    disk_size_gb        = 50
+  }
+
+  storage_data_disk {
+    name                = "${var.azure_resources_prefix}-master-vm-etcd-disk-${count.index + 1}"
+    create_option       = "Empty"
+    managed_disk_type   = "Standard_LRS"
+    lun                 = 1
+    disk_size_gb        = 50
   }
 
   delete_os_disk_on_termination    = true
