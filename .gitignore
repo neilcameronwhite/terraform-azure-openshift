@@ -11,3 +11,6 @@ azure.auto.tfvars
 
 # Terraform plan
 openshift.plan
+
+# Certificates
+.certs/
