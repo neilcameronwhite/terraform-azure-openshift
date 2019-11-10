@@ -132,7 +132,7 @@ resource "azurerm_network_security_rule" "master-443" {
 
 resource "azurerm_network_interface" "master" {
   count                     = "${var.openshift_master_count}"
-  name                      = "${var.azure_resources_prefix}-master-nic-0${count..index + 1}"
+  name                      = "${var.azure_resources_prefix}-master-nic-0${count.index + 1}"
   location                  = "${var.azure_location}"
   resource_group_name       = "${azurerm_resource_group.openshift.name}"
   network_security_group_id = "${azurerm_network_security_group.master.id}"
@@ -148,7 +148,7 @@ resource "azurerm_network_interface" "master" {
 
 resource "azurerm_virtual_machine" "master" {
   count                 = "${var.openshift_master_count}"
-  name                  = "${var.azure_resources_prefix}-master-0${count..index + 1}"
+  name                  = "${var.azure_resources_prefix}-master-0${count.index + 1}"
   location              = "${var.azure_location}"
   resource_group_name   = "${azurerm_resource_group.openshift.name}"
   network_interface_ids = ["${element(azurerm_network_interface.master.*.id, count.index)}"]
@@ -163,14 +163,14 @@ resource "azurerm_virtual_machine" "master" {
   }
 
   storage_os_disk {
-    name                = "${var.azure_resources_prefix}-master-vm-os-disk-0${count..index + 1}"
+    name                = "${var.azure_resources_prefix}-master-vm-os-disk-0${count.index + 1}"
     caching             = "ReadWrite"
     create_option       = "FromImage"
     managed_disk_type   = "Standard_LRS"
   }
 
   storage_data_disk {
-    name                = "${var.azure_resources_prefix}-master-vm-docker-disk-0${count..index + 1}"
+    name                = "${var.azure_resources_prefix}-master-vm-docker-disk-0${count.index + 1}"
     create_option       = "Empty"
     managed_disk_type   = "Standard_LRS"
     lun                 = 0
@@ -178,7 +178,7 @@ resource "azurerm_virtual_machine" "master" {
   }
 
   storage_data_disk {
-    name                = "${var.azure_resources_prefix}-master-vm-etcd-disk-0${count..index + 1}"
+    name                = "${var.azure_resources_prefix}-master-vm-etcd-disk-0${count.index + 1}"
     create_option       = "Empty"
     managed_disk_type   = "Standard_LRS"
     lun                 = 1
@@ -189,7 +189,7 @@ resource "azurerm_virtual_machine" "master" {
   delete_data_disks_on_termination = true
 
   os_profile {
-    computer_name  = "master0${count..index + 1}"
+    computer_name  = "master0${count.index + 1}"
     admin_username = "${var.openshift_vm_admin_user}"
   }
 
