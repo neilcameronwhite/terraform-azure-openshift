@@ -1,5 +1,5 @@
 azure_location = "West Europe"
-azure_resource_group_name = "okd-cluster-22"
+azure_resource_group_name = "okd-cluster-23"
 azure_resources_prefix = "okd"
 azure_storage_prefix = "okd000"
 azure_address_space = "172.16.0.0/16"
