@@ -46,7 +46,15 @@ resource "azurerm_virtual_machine" "node" {
     create_option     = "Empty"
     managed_disk_type = "Standard_LRS"
     lun               = 0
-    disk_size_gb      = 10
+    disk_size_gb      = 100
+  }
+
+  storage_data_disk {
+    name              = "${var.azure_resources_prefix}-node-vm-ephemeral-disk-0${count.index + 1}"
+    create_option     = "Empty"
+    managed_disk_type = "Standard_LRS"
+    lun               = 0
+    disk_size_gb      = 100
   }
 
   delete_os_disk_on_termination    = true
