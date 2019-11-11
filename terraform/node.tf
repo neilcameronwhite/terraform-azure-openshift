@@ -53,7 +53,7 @@ resource "azurerm_virtual_machine" "node" {
     name              = "${var.azure_resources_prefix}-node-vm-ephemeral-disk-0${count.index + 1}"
     create_option     = "Empty"
     managed_disk_type = "Standard_LRS"
-    lun               = 0
+    lun               = 1
     disk_size_gb      = 100
   }
 
