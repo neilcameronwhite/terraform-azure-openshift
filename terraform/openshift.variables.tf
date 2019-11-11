@@ -14,8 +14,6 @@ variable "openshift_node_vm_size" {}
 variable "openshift_master_vm_size" {}
 variable "openshift_infra_vm_size" {}
 variable "openshift_bastion_vm_size" {}
-variable "openshift_master_domain" {}
-variable "openshift_router_domain" {}
 variable "openshift_os_image_publisher" {}
 variable "openshift_os_image_offer" {}
 variable "openshift_os_image_sku" {}
