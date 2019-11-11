@@ -13,7 +13,7 @@ resource "azurerm_availability_set" "infra" {
 }
 
 resource "azurerm_lb" "infra" {
-  name                = "${var.azure_resources_prefix}-infra"
+  name                = "${var.azure_resources_prefix}-infra-public"
   location            = "${var.azure_location}"
   resource_group_name = "${azurerm_resource_group.openshift.name}"
 
