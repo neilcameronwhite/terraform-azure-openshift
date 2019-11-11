@@ -63,11 +63,10 @@ resource "azurerm_lb_probe" "master-public-load-balancer" {
   name                = "control-plane-api"
   resource_group_name = "${azurerm_resource_group.openshift.name}"
   loadbalancer_id     = "${azurerm_lb.master-public-load-balancer.id}"
-  protocol            = "Https"
+  protocol            = "https"
   request_path        = "/healthz"
   port                = 443
 }
-
 
 resource "azurerm_lb" "master-internal-load-balancer" {
   name                            = "${var.azure_resources_prefix}-master-internal"
@@ -92,7 +91,7 @@ resource "azurerm_lb_probe" "master-internal-load-balancer" {
   name                = "control-plane-api"
   resource_group_name = "${azurerm_resource_group.openshift.name}"
   loadbalancer_id     = "${azurerm_lb.master-internal-load-balancer.id}"
-  protocol            = "Https"
+  protocol            = "https"
   request_path        = "/healthz"
   port                = 443
 }
@@ -144,7 +143,6 @@ resource "azurerm_network_interface" "master" {
     load_balancer_backend_address_pools_ids = ["${azurerm_lb_backend_address_pool.master-public-load-balancer.id}"]
   }
 }
-
 
 resource "azurerm_virtual_machine" "master" {
   count                 = "${var.openshift_master_count}"
